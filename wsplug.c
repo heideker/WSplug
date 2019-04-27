@@ -1,3 +1,9 @@
+/* WSplug - Weather Station Ultra-ligth connector
+*
+* Author: Alexandre Heideker - UFABC
+* 2019-04-25
+* In context of SWAMP Project
+*/
 #include <errno.h>
 #include <fcntl.h> 
 #include <stdio.h>
@@ -90,4 +96,9 @@ int main()
         /* repeat read to get full message */
     } while (1);
 }
+
+
+
+
+
 

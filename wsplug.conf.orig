@@ -1,0 +1,12 @@
+# WSplug configuration file
+#
+# Author: Alexandre Heideker - UFABC
+# 2019-04-25
+# In context of SWAMP Project
+
+SerialPort = /dev/ttyUSB0
+SerialSpeed = 19200
+SerialBits = 8
+SerialStopBits = 1
+SerialParity = N
+
