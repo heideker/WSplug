@@ -3,9 +3,9 @@
 # Author: Alexandre Heideker - UFABC
 # 2019-04-25
 # In context of SWAMP Project
-
+debugMode = 0
 SerialPort = /dev/ttyUSB0
-SerialSpeed = 19200
+SerialSpeed = B19200
 SerialBits = 8
 SerialStopBits = 1
 SerialParity = N
