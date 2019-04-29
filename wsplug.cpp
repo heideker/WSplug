@@ -30,7 +30,7 @@ using namespace std;
 
 
 // Globals
-mutex mt;
+std::mutex mt;
 string SerialPort;
 string SerialSpeed;
 unsigned int SerialBits;
