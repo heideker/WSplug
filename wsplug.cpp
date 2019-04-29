@@ -77,11 +77,13 @@ int main(int argc, char *argv[]) {
         cout << "Error opening " << SerialPort << "(" << strerror(errno) << endl;
         return -1;
     }
+    if (_debugMode) cout << "Serial Port Opened." << endl;
 
     if (!setInterfaceAttributes(fd)) {
         close(fd);
         return -1;
     }
+    if (_debugMode) cout << "Serial Port Configurated." << endl;
 
     thread tOrion (thrOrionPublisher);
 
