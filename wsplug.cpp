@@ -88,12 +88,14 @@ int main(int argc, char *argv[]) {
     thread tOrion (thrOrionPublisher);
 
     do {
+        if (_debugMode) cout << "Getting Serial Data..." << endl;
         char buf[100];
         int rdlen;
         rdlen = read(fd, buf, sizeof(buf) - 1);
         if (rdlen > 0) {
             buf[rdlen] = 0;
             string line(buf);
+            if (_debugMode) cout << line << endl;
             updateData(line);
         } else if (rdlen < 0) {
             cout << "Error reading port (" << strerror(errno) << ")" << endl;
