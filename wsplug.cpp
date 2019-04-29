@@ -15,22 +15,40 @@
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include "swissknife.h"
 
 using namespace std;
 
-
+// Globals
 string SerialPort;
 u_int32_t SerialSpeed;
 u_int8_t SerialBits;
 u_int8_t SerialStopBits;
 char SerialParity;
+bool _debugMode = false;
+bool OrionMode = false;
+string OrionHost;
+uint16_t OrionPort;
+bool EventDriven = false;
+uint32_t PublishInterval;
+string NodeID;
+bool IoTAgentMode = false;
 
+
+//functions
 bool readSetup();
+bool readSetupFromCL(int argc, char *argv[]);
+int set_interface_attribs(int fd, int speed);
+void dumpVar();
 
 int main(int argc, char *argv[]) {
     char *portname = "/dev/ttyUSB0";
     int fd;
     int wlen;
+    if (argc>1) {
+        if (!readSetupFromCL(argc, argv)) return -1;
+    }
 
     fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
@@ -60,8 +78,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-int set_interface_attribs(int fd, int speed)
-{
+int set_interface_attribs(int fd, int speed) {
     struct termios tty;
 
     if (tcgetattr(fd, &tty) < 0) {
@@ -128,130 +145,155 @@ bool readSetup(){
                 value = trim(line.substr(line.find("=")+1, line.length()-1));
                 if (token == "debugMode") {
                     if (value == "1")
-                        IMvar.debugMode = true;
+                        _debugMode = true;
                     else
-                        IMvar.debugMode = false; 
+                        _debugMode = false; 
                 }
-                if (token == "CPUSingleStat") {
-                    if (value == "1")
-                        IMvar.CPUSingleStat = true;
-                    else
-                        IMvar.CPUSingleStat = false; 
+                if (token == "NodeID") {
+                    NodeID = value;
                 }
-                if (token == "LogMode") {
-                    if (value == "1")
-                        IMvar.LogMode = true;
-                    else
-                        IMvar.LogMode = false; 
+                if (token == "SerialPort") {
+                    SerialPort = value;
                 }
-                if (token == "LogType") {
-                    IMvar.LogType = UCase(value);
+                if (token == "SerialSpeed") {
+                    SerialSpeed = stoi(value);
                 }
-                if (token == "LogFileName") {
-                    IMvar.LogFileName = value;
+                if (token == "SerialBits") {
+                    SerialBits = stoi(value);
                 }
-                if (token == "NodeName") {
-                    IMvar.NodeName = value;
+                if (token == "SerialStopBits") {
+                    SerialStopBits = stoi(value);
                 }
-                if (token == "NodeUUID") {
-                    IMvar.NodeUUID = value;
-                }
-                if (token == "KindOfNode") {
-                    IMvar.KindOfNode = value;
-                }
-               if (token == "MySQLMode") {
-                    if (value == "1")
-                        IMvar.MySQLMode = true;
-                    else
-                        IMvar.MySQLMode = false; 
-                }
-                if (token == "MySQLHost") {
-                    IMvar.MySQLHost = value;
-                }
-                if (token == "MySQLUser") {
-                    IMvar.MySQLUser = value;
-                }
-                if (token == "MySQLPasswd") {
-                    IMvar.MySQLPasswd = value;
-                }
-                if (token == "ServerMode") {
-                    if (value == "1")
-                        IMvar.ServerMode = true;
-                    else
-                        IMvar.ServerMode = false; 
-                }
-                if (token == "ServerPort") {
-                    IMvar.ServerPort = stoi(value);
+                if (token == "SerialParity") {
+                    SerialStopBits = value.c_str()[0];
                 }
                 if (token == "OrionMode") {
                     if (value == "1")
-                        IMvar.OrionMode = true;
+                        OrionMode = true;
                     else
-                        IMvar.OrionMode = false; 
+                        OrionMode = false; 
                 }
                 if (token == "OrionHost") {
-                    IMvar.OrionHost = value;
+                    OrionHost = value;
                 }
                 if (token == "OrionPort") {
-                    IMvar.OrionPort = stoi(value);
+                    OrionPort = stoi(value);
                 }
-                if (token == "SampplingTime") {
-                    IMvar.SampplingTime = stoi(value);
-                }
-                if (token == "LogIntervall") {
-                    IMvar.LogIntervall = stoi(value);
-                }
-                if (token == "OrionPublisherTime") {
-                    IMvar.OrionPublisherTime = stoi(value);
-                }
-                if (token == "DockerStat") {
+                if (token == "EventDriven") {
                     if (value == "1")
-                        IMvar.DockerStat = true;
+                        EventDriven = true;
                     else
-                        IMvar.DockerStat = false; 
+                        EventDriven = false; 
                 }
-                if (token == "CPUStat") {
+                if (token == "PublishInterval") {
+                    PublishInterval = stoi(value);
+                }
+                if (token == "IoTAgentMode") {
                     if (value == "1")
-                        IMvar.CPUStat = true;
+                        IoTAgentMode = true;
                     else
-                        IMvar.CPUStat = false; 
-                }
-                if (token == "CPUPathStat") {
-                    IMvar.CPUPathStat = value;
-                }
-                if (token == "CPUPathArch") {
-                    IMvar.CPUPathArch = value;
-                }       
-                if (token == "NetworkStat") {
-                    if (value == "1")
-                        IMvar.NetworkStat = true;
-                    else
-                        IMvar.NetworkStat = false; 
-                }
-                if (token == "NetworkPathStat") {
-                    IMvar.NetworkPathStat = value;
-                }
-                if (token == "ProcessNames") {
-                    IMvar.ProcessNames = splitString(trim(value), ' ');
-                }
-                if (token == "DockerNames") {
-                    IMvar.DockerNames = splitString(trim(value), ' ');
-                }
- 
-                if (token == "DiskStat") {
-                    if (value == "1")
-                        IMvar.DiskStat = true;
-                    else
-                        IMvar.DiskStat = false; 
-                }
+                        IoTAgentMode = false; 
+                } 
             }
         }
         File.close();
-        if (IMvar.debugMode) dumpVar(IMvar);
+        if (_debugMode) dumpVar();
         return 1;
     } else {
         cout << "Error reading monifog.conf\n" << endl;
         return 0;
     }
 }
+
+bool readSetupFromCL(int argc, char *argv[]){
+    int i;
+    bool error = false;
+    string token;
+    string value;
+    for (i=1; i<argc; i++) {
+        string line(argv[i]);
+        if (line[0] != '-' && line[1] != '-') {
+            token = trim(line.substr(2, line.find("=")));
+            value = trim(line.substr(line.find("=")+1, line.length()-1));
+            if (token == "debugMode") {
+                if (value == "1")
+                    _debugMode = true;
+                else
+                    _debugMode = false; 
+            }
+            if (token == "NodeID") {
+                NodeID = value;
+            }
+            if (token == "SerialPort") {
+                SerialPort = value;
+            }
+            if (token == "SerialSpeed") {
+                SerialSpeed = stoi(value);
+            }
+            if (token == "SerialBits") {
+                SerialBits = stoi(value);
+            }
+            if (token == "SerialStopBits") {
+                SerialStopBits = stoi(value);
+            }
+            if (token == "SerialParity") {
+                SerialStopBits = value.c_str()[0];
+            }
+            if (token == "OrionMode") {
+                if (value == "1")
+                    OrionMode = true;
+                else
+                    OrionMode = false; 
+            }
+            if (token == "OrionHost") {
+                OrionHost = value;
+            }
+            if (token == "OrionPort") {
+                OrionPort = stoi(value);
+            }
+            if (token == "EventDriven") {
+                if (value == "1")
+                    EventDriven = true;
+                else
+                    EventDriven = false; 
+            }
+            if (token == "PublishInterval") {
+                PublishInterval = stoi(value);
+            }
+            if (token == "IoTAgentMode") {
+                if (value == "1")
+                    IoTAgentMode = true;
+                else
+                    IoTAgentMode = false; 
+            } 
+        } else {
+            error = true;
+            break;
+        }
+    }
+    if (error) {
+        cout << "Error: Invalid command line argument" << endl;
+        cout << "Usage: FILL USAGE VARS " << endl;
+        return false;
+    } else {
+        return true;
+    }
+}
+
+void dumpVar() {
+    cout << "*** DEBUG Mode *** Dumping variables:" << endl;
+    cout << "SerialPort:\t" << SerialPort << endl;
+    cout << "SerialSpeed:\t" <<  SerialSpeed << endl;
+    cout << "SerialBits:\t" <<  SerialBits << endl;
+    cout << "SerialStopBits:\t" <<  SerialStopBits << endl;
+    cout << "SerialParity:\t" <<  SerialParity << endl;
+    cout << "OrionMode:\t" <<  OrionMode << endl;
+    cout << "OrionHost:\t" <<  OrionHost << endl;
+    cout << "OrionPort:\t" <<  OrionPort << endl;
+    cout << "EventDriven:\t" <<  EventDriven << endl;
+    cout << "PublishInterval:\t" <<  PublishInterval << endl;
+    cout << "NodeID:\t" <<  NodeID << endl;
+    cout << "IoTAgentMode:\t" <<  IoTAgentMode << endl;
+}
+
 

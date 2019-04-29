@@ -9,4 +9,12 @@ SerialSpeed = 19200
 SerialBits = 8
 SerialStopBits = 1
 SerialParity = N
+OrionMode = 1
+OrionHost = http://imaiot.org
+OrionPort = 1026
+EventDriven = 0
+PublishInterval = 10
+NodeID = 
+
+IoTAgentMode = 0
 
