@@ -19,6 +19,7 @@
 #include <sstream>
 #include <thread>
 #include <curl/curl.h>
+#include <mutex>
 
 #define SEM_WAIT mt.lock();
 #define SEM_POST mt.unlock();
@@ -408,6 +409,7 @@ void dumpVar() {
 
 void thrOrionPublisher(){
     if (OrionMode) return;
+    if (_debugMode) cout << "Start Orion Publisher Thread." << endl;
     bool connected = false;
     while (true) {
         if (!connected) {
