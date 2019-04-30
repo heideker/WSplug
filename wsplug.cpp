@@ -62,7 +62,7 @@ bool createEntity();
 bool updateEntity();
 string getRestFiware(string url, curl_slist *chunk, string data);
 size_t curlCallback(char *contents, size_t size, size_t nmemb, void *userp);
-string getJSON();
+const string getJSON();
 
 int main(int argc, char *argv[]) {
     int fd;
@@ -235,9 +235,12 @@ bool setInterfaceAttributes(int fd) {
         cout << "Error from tcgetattr: " << strerror(errno) << endl;
         return false;
     }
+    speed_t SerSp;
+    SerSp = (unsigned long) SerialSpeed.c_str();
 
-    cfsetospeed(&tty, (speed_t)SerialSpeed.c_str());
-    cfsetispeed(&tty, (speed_t)SerialSpeed.c_str());
+
+    cfsetospeed(&tty, SerSp);
+    cfsetispeed(&tty, SerSp);
 
     tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
     tty.c_cflag &= ~CSIZE;
@@ -412,7 +415,7 @@ void dumpVar() {
 
 
 void thrOrionPublisher(){
-    if (OrionMode) return;
+    if (!OrionMode) return;
     if (_debugMode) cout << "Start Orion Publisher Thread." << endl;
     bool connected = false;
     while (true) {
@@ -451,6 +454,7 @@ bool ckEntity(){
     url << OrionHost << ":" << OrionPort << "/v2/entities?type=WeatherStation&id=" << NodeID;
     if (_debugMode) cout << "URL:\t" << url.str() << endl;
     struct curl_slist *chunk = NULL;
+//    chunk = curl_slist_append(chunk, "Content-Type: application/json");
     chunk = curl_slist_append(chunk, "fiware-service: openiot");
     chunk = curl_slist_append(chunk, "fiware-servicepath: /");
 
@@ -465,51 +469,65 @@ bool ckEntity(){
     return false;  
 }
 
-string getJSON(){
-    ostringstream json;
-    SEM_WAIT
-    json << "\"Battery\": {\"value\":" << WS.Battery << " , \"type\": \"Number\", \"Unit\":\"" << WS.BatteryUnit << "\"},"
-            << "\"WindSpeedMin\": {\"value\":" << WS.WindSpeedMin << " , \"type\": \"Number\", \"Unit\":\"" << WS.WindSpeedMinUnit << "\"},"
-            << "\"WindSpeedAvg\": {\"value\":" << WS.WindSpeedAvg << " , \"type\": \"Number\", \"Unit\":\"" << WS.WindSpeedAvgUnit << "\"},"
-            << "\"WindSpeedMax\": {\"value\":" << WS.WindSpeedMax << " , \"type\": \"Number\", \"Unit\":\"" << WS.WindSpeedMaxUnit << "\"},"
-            << "\"WindDirMin\": {\"value\":" << WS.WindDirMin << " , \"type\": \"Number\", \"Unit\":\"" << WS.WindDirMinUnit << "\"},"
-            << "\"WindDirAvg\": {\"value\":" << WS.WindDirAvg << " , \"type\": \"Number\", \"Unit\":\"" << WS.WindDirAvgUnit << "\"},"
-            << "\"WindDirMax\": {\"value\":" << WS.WindDirMax << " , \"type\": \"Number\", \"Unit\":\"" << WS.WindDirMaxUnit << "\"},"
-            << "\"AirPressure\": {\"value\":" << WS.AirPressure << " , \"type\": \"Number\", \"Unit\":\"" << WS.AirPressureUnit << "\"},"
-            << "\"AirTemperature\": {\"value\":" << WS.AirTemperature << " , \"type\": \"Number\", \"Unit\":\"" << WS.AirTemperatureUnit << "\"},"
-            << "\"InternalTemperature\": {\"value\":" << WS.InternalTemperature << " , \"type\": \"Number\", \"Unit\":\"" << WS.InternalTemperatureUnit << "\"},"
-            << "\"RelativeHumidity\": {\"value\":" << WS.RelativeHumidity << " , \"type\": \"Number\", \"Unit\":\"" << WS.RelativeHumidityUnit << "\"},"
-            << "\"RainAcc\": {\"value\":" << WS.RainAcc << " , \"type\": \"Number\", \"Unit\":\"" << WS.RainAccUnit << "\"},"
-            << "\"RainDuration\": {\"value\":" << WS.RainDuration << " , \"type\": \"Number\", \"Unit\":\"" << WS.RainDurationUnit << "\"},"
-            << "\"RainIntensity\": {\"value\":" << WS.RainIntensity << " , \"type\": \"Number\", \"Unit\":\"" << WS.RainIntensityUnit << "\"},"
-            << "\"RainPeak\": {\"value\":" << WS.RainPeak << " , \"type\": \"Number\", \"Unit\":\"" << WS.RainPeakUnit << "\"},"
-            << "\"HailAcc\": {\"value\":" << WS.HailAcc << " , \"type\": \"Number\", \"Unit\":\"" << WS.HailAccUnit << "\"},"
-            << "\"HailDuration\": {\"value\":" << WS.HailDuration << " , \"type\": \"Number\", \"Unit\":\"" << WS.HailDurationUnit << "\"},"
-            << "\"HailIntensity\": {\"value\":" << WS.HailIntensity << " , \"type\": \"Number\", \"Unit\":\"" << WS.HailIntensityUnit << "\"},"
-            << "\"HailPeak\": {\"value\":" << WS.HailPeak << " , \"type\": \"Number\", \"Unit\":\"" << WS.HailPeakUnit << "\"},"
-            << "\"HeatingTemp\": {\"value\":" << WS.HeatingTemp << " , \"type\": \"Number\", \"Unit\":\"" << WS.HeatingTempUnit << "\"},"
-            << "\"HeatingVolt\": {\"value\":" << WS.HeatingVolt << " , \"type\": \"Number\", \"Unit\":\"" << WS.HeatingVoltUnit << "\"},"
-            << "\"ReferenceVolt\": {\"value\":" << WS.ReferenceVolt << " , \"type\": \"Number\", \"Unit\":\"" << WS.ReferenceVoltUnit << "\"}";
-
-    SEM_POST
-    return json.str();
-}
-
 bool updateEntity(){
-
-    string json = "{" + getJSON() +"}";
-
+    SEM_WAIT
+    string js = " { \"Battery\": {\"value\":" + to_string(WS.Battery) + " , \"type\": \"Number\"}, \"BatteryUnit\": {\"value\":\"";
+            js += (WS.BatteryUnit + "\" , \"type\":\"Text\"}, ");
+            js += "\"WindSpeedMin\": {\"value\":" + to_string(WS.WindSpeedMin) + " , \"type\": \"Number\"}, \"WindSpeedMinUnit\": {\"value\":\"";
+            js += (WS.WindSpeedMinUnit + "\", \"type\":\"Text\"}, ");
+            js += "\"WindSpeedAvg\": {\"value\":" + to_string(WS.WindSpeedAvg) + " , \"type\": \"Number\"}, \"WindSpeedAvgUnit\": {\"value\":\"";
+            js += (WS.WindSpeedAvgUnit + "\", \"type\":\"Text\"}, ");
+            js += "\"WindSpeedMax\": {\"value\":" + to_string(WS.WindSpeedMax) + " , \"type\": \"Number\"}, \"WindSpeedMaxUnit\": {\"value\":\"";
+            js += (WS.WindSpeedMaxUnit + "\", \"type\":\"Text\"}, ");
+            js += "\"WindDirMin\": {\"value\":" + to_string(WS.WindDirMin) + " , \"type\": \"Number\"}, \"WindDirMinUnit\": {\"value\":\"";
+            js += (WS.WindDirMinUnit + "\", \"type\":\"Text\"}, ");
+            js +=  "\"WindDirAvg\": {\"value\":" + to_string( WS.WindDirAvg) + " , \"type\": \"Number\"}, \"WindDirAvgUnit\": {\"value\":\"";
+            js += (WS.WindDirAvgUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"WindDirMax\": {\"value\":" + to_string( WS.WindDirMax) + " , \"type\": \"Number\"}, \"WindDirMaxUnit\": {\"value\":\"";
+            js +=  (WS.WindDirMaxUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"AirPressure\": {\"value\":" + to_string( WS.AirPressure) + " , \"type\": \"Number\"}, \"AirPressureUnit\": {\"value\":\"";
+            js +=  (WS.AirPressureUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"AirTemperature\": {\"value\":" + to_string( WS.AirTemperature) + " , \"type\": \"Number\"}, \"AirTemperatureUnit\": {\"value\":\"";
+            js +=  (WS.AirTemperatureUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"InternalTemperature\": {\"value\":" + to_string( WS.InternalTemperature) + " , \"type\": \"Number\"}, \"InternalTemperatureUnit\": {\"value\":\"";
+            js +=  (WS.InternalTemperatureUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"RelativeHumidity\": {\"value\":" + to_string( WS.RelativeHumidity) + " , \"type\": \"Number\"}, \"RelativeHumidityUnit\": {\"value\":\"";
+            js +=  (WS.RelativeHumidityUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"RainAcc\": {\"value\":" + to_string( WS.RainAcc) + " , \"type\": \"Number\"}, \"RainAccUnit\": {\"value\":\"";
+            js +=  (WS.RainAccUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"RainDuration\": {\"value\":" + to_string( WS.RainDuration) + " , \"type\": \"Number\"}, \"RainDurationUnit\": {\"value\":\"";
+            js +=  (WS.RainDurationUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"RainIntensity\": {\"value\":" + to_string( WS.RainIntensity) + " , \"type\": \"Number\"}, \"RainIntensityUnit\": {\"value\":\"";
+            js +=  (WS.RainIntensityUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"RainPeak\": {\"value\":" + to_string( WS.RainPeak) + " , \"type\": \"Number\"}, \"RainPeakUnit\": {\"value\":\"";
+            js +=  (WS.RainPeakUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"HailAcc\": {\"value\":" + to_string( WS.HailAcc) + " , \"type\": \"Number\"}, \"HailAccUnit\": {\"value\":\"";
+            js +=  (WS.HailAccUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"HailDuration\": {\"value\":" + to_string( WS.HailDuration) + " , \"type\": \"Number\"}, \"HailDurationUnit\": {\"value\":\"";
+            js +=  (WS.HailDurationUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"HailIntensity\": {\"value\":" + to_string( WS.HailIntensity) + " , \"type\": \"Number\"}, \"HailIntensityUnit\": {\"value\":\"";
+            js +=  (WS.HailIntensityUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"HailPeak\": {\"value\":" + to_string( WS.HailPeak) + " , \"type\": \"Number\"}, \"HailPeakUnit\": {\"value\":\"";
+            js +=  (WS.HailPeakUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"HeatingTemp\": {\"value\":" + to_string( WS.HeatingTemp) + " , \"type\": \"Number\"}, \"HeatingTempUnit\": {\"value\":\"";
+            js +=  (WS.HeatingTempUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"HeatingVolt\": {\"value\":" + to_string( WS.HeatingVolt) + " , \"type\": \"Number\"}, \"HeatingVoltUnit\": {\"value\":\"";
+            js +=  (WS.HeatingVoltUnit + "\", \"type\":\"Text\"},");
+            js +=  "\"ReferenceVolt\": {\"value\":" + to_string( WS.ReferenceVolt) + " , \"type\": \"Number\"}, \"ReferenceVoltUnit\": {\"value\":\"";
+            js +=  (WS.ReferenceVoltUnit + "\", \"type\":\"Text\"} }");
+        
+    SEM_POST
     ostringstream url;
     
     url << OrionHost << ":" << OrionPort << "/v2/entities/" << NodeID << "/attrs?options=keyValues";
     if (_debugMode) cout << "URL:\t" << url.str() << endl;
-    if (_debugMode) cout << "JSON:\t" << json << endl;
+    if (_debugMode) cout << "JSON:\t" << js << endl;
     struct curl_slist *chunk = NULL;
     chunk = curl_slist_append(chunk, "Content-Type: application/json");
     chunk = curl_slist_append(chunk, "fiware-service: openiot");
     chunk = curl_slist_append(chunk, "fiware-servicepath: /");
 
-    string retStr = getRestFiware(url.str(), chunk, json);
+    string retStr = getRestFiware(url.str(), chunk, js);
     if (retStr=="error") {
         if (_debugMode) cout << "ERROR: " << retStr << endl;
         return false;
@@ -518,11 +536,12 @@ bool updateEntity(){
 }
 
 bool createEntity(){
-    if (ckEntity()) return false;
     ostringstream json;
-    json << "{\"id\":\"" << NodeID << "\", \"type\":\"WeatherStation\", " << getJSON() << "}";
-    ostringstream url;
+    SEM_WAIT
+    json << "{\"id\":\"" << NodeID << "\", \"type\":\"WeatherStation\" }";
+    SEM_POST
 
+    ostringstream url;
     url << OrionHost << ":" << OrionPort << "/v2/entities?options=keyValues";
     if (_debugMode) cout << "URL:\t" << url.str() << endl;
     if (_debugMode) cout << "JSON:\t" << json.str() << endl;
@@ -532,11 +551,10 @@ bool createEntity(){
     chunk = curl_slist_append(chunk, "fiware-servicepath: /");
 
     string retStr = getRestFiware(url.str(), chunk, json.str());
-    if (retStr.find("{\"error\":",0)) 
+    if (retStr.find("{\"error\":",0) || retStr.find("400",0) ) 
         return false;
     return true;
 }
-
 
 string getRestFiware(string url, curl_slist *chunk, string data) {
     CURL *curl;
@@ -558,9 +576,10 @@ string getRestFiware(string url, curl_slist *chunk, string data) {
 
         res = curl_easy_perform(curl);
         if(res != CURLE_OK) {
+            if (_debugMode) cout << "CURL return: " << res << endl;
             curl_easy_cleanup(curl);
             curl_global_cleanup();
-            return "";
+            return "error";
         }
         curl_easy_cleanup(curl);
         curl_global_cleanup();
@@ -568,8 +587,9 @@ string getRestFiware(string url, curl_slist *chunk, string data) {
     }
     curl_easy_cleanup(curl);
     curl_global_cleanup();
-    return "";
+    return "error";
 }
+
 
 size_t curlCallback(char *contents, size_t size, size_t nmemb, void *userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
