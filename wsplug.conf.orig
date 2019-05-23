@@ -16,5 +16,10 @@ EventDriven = 0
 PublishInterval = 10
 NodeID = 
 
+Latitude = 0
+Longitude = 0
+FiwareService = openiot
+FiwareServicepath = /
+
 IoTAgentMode = 0
 

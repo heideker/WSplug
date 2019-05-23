@@ -46,6 +46,11 @@ uint32_t PublishInterval;
 string NodeID;
 bool IoTAgentMode = false;
 WeatherStation WS;
+float WSlongitude;
+float WSlatitude;
+string FiwareService;
+string FiwareServicepath;
+
 
 
 
@@ -320,6 +325,12 @@ bool parseVar(string token, string value){
     if (token == "SerialParity") {
         SerialParity = value.c_str()[0];
     } else
+    if (token == "Longitude") {
+        WSlongitude = stof(value);
+    } else
+    if (token == "Latitude") {
+        WSlatitude = stof(value);
+    } else
     if (token == "OrionMode") {
         if (value == "1")
             OrionMode = true;
@@ -328,6 +339,12 @@ bool parseVar(string token, string value){
     } else
     if (token == "OrionHost") {
         OrionHost = value;
+    } else
+    if (token == "FiwareService") {
+        FiwareService = value;
+    } else
+    if (token == "FiwareServicepath") {
+        FiwareServicepath = value;
     } else
     if (token == "OrionPort") {
         OrionPort = stoi(value);
@@ -417,6 +434,10 @@ void dumpVar() {
     cout << "PublishInterval:\t" <<  PublishInterval << endl;
     cout << "NodeID:\t" <<  NodeID << endl;
     cout << "IoTAgentMode:\t" <<  IoTAgentMode << endl;
+    cout << "Longitude:\t" <<  WSlongitude << endl;
+    cout << "Latitude:\t" <<  WSlatitude << endl;
+    cout << "fiware-service:\t" <<  FiwareService << endl;
+    cout << "fiware-servicepath:\t" <<  FiwareServicepath << endl;
 }
 
 
@@ -462,8 +483,8 @@ bool ckEntity(){
     if (_debugMode) cout << "URL:\t" << url.str() << endl;
     struct curl_slist *chunk = NULL;
 //    chunk = curl_slist_append(chunk, "Content-Type: application/json");
-    chunk = curl_slist_append(chunk, "fiware-service: openiot");
-    chunk = curl_slist_append(chunk, "fiware-servicepath: /");
+    chunk = curl_slist_append(chunk, ("fiware-service: " + FiwareService).c_str());
+    chunk = curl_slist_append(chunk, ("fiware-servicepath: " + FiwareServicepath).c_str());
 
     string retStr = getRestFiware(url.str(), chunk, "");
     if (_debugMode) cout << "CURL return: " << retStr << endl;
@@ -479,7 +500,7 @@ bool ckEntity(){
 bool updateEntity(){
     SEM_WAIT
     string js = "{\"Battery\": {\"value\":\"" + to_string(WS.Battery) + "\" , \"type\": \"Number\"}, \"BatteryUnit\": {\"value\":\"";
-	    js += (WS.BatteryUnit + "\" , \"type\":\"Text\"}, ");
+	        js += (WS.BatteryUnit + "\" , \"type\":\"Text\"}, ");
             js += "\"WindSpeedMin\": {\"value\":\"" + to_string(WS.WindSpeedMin) + "\" , \"type\": \"Number\"}, \"WindSpeedMinUnit\": {\"value\":\"";
             js += (WS.WindSpeedMinUnit + "\", \"type\":\"Text\"}, ");
             js += "\"WindSpeedAvg\": {\"value\":\"" + to_string(WS.WindSpeedAvg) + "\" , \"type\": \"Number\"}, \"WindSpeedAvgUnit\": {\"value\":\"";
@@ -522,7 +543,9 @@ bool updateEntity(){
             js +=  (WS.HeatingVoltUnit + "\", \"type\":\"Text\"},");
             js +=  "\"ReferenceVolt\": {\"value\":\"" + to_string( WS.ReferenceVolt) + "\" , \"type\": \"Number\"}, \"ReferenceVoltUnit\": {\"value\":\"";
             js +=  (WS.ReferenceVoltUnit + "\", \"type\":\"Text\"},");
-	    js += "\"LocalTimeStamp\": {\"value\":\""+to_string(std::time(0))+"\", \"type\":\"Integer\"}}";        
+            js += "\"LocalTimeStamp\": {\"value\":\""+to_string(std::time(0))+"\", \"type\":\"Integer\"}, ";
+            js += "\"location\": { \"type\": \"GeoProperty\", \"value\": {\"type\": \"Point\",\"coordinates\": [";
+            js += to_string(WSlongitude) + "," + to_string(WSlatitude) + "]}}}";        
     SEM_POST
     ostringstream url;
 
@@ -540,8 +563,8 @@ bool updateEntity(){
     if (_debugMode) cout << "JSON:\t" << js << endl;
     struct curl_slist *chunk = NULL;
     chunk = curl_slist_append(chunk, "Content-Type: application/json");
-    chunk = curl_slist_append(chunk, "fiware-service: openiot");
-    chunk = curl_slist_append(chunk, "fiware-servicepath: /");
+    chunk = curl_slist_append(chunk, ("fiware-service: " + FiwareService).c_str());
+    chunk = curl_slist_append(chunk, ("fiware-servicepath: " + FiwareServicepath).c_str());
 
     string retStr = getRestFiware(url.str(), chunk, js);
     if (retStr=="error") {
@@ -563,8 +586,8 @@ bool createEntity(){
     if (_debugMode) cout << "JSON:\t" << json.str() << endl;
     struct curl_slist *chunk = NULL;
     chunk = curl_slist_append(chunk, "Content-Type: application/json");
-    chunk = curl_slist_append(chunk, "fiware-service: openiot");
-    chunk = curl_slist_append(chunk, "fiware-servicepath: /");
+    chunk = curl_slist_append(chunk, ("fiware-service: " + FiwareService).c_str());
+    chunk = curl_slist_append(chunk, ("fiware-servicepath: " + FiwareServicepath).c_str());
 
     string retStr = getRestFiware(url.str(), chunk, json.str());
     if (retStr.find("{\"error\":",0) || retStr.find("400",0) ) 
