@@ -61,7 +61,7 @@ bool ckEntity();
 bool createEntity();
 bool updateEntity();
 string getRestFiware(string url, curl_slist *chunk, string data);
-size_t curlCallback(char *contents, size_t size, size_t nmemb, void *userp);
+static size_t curlCallback(char *contents, size_t size, size_t nmemb, void *userp);
 const string getJSON();
 
 int main(int argc, char *argv[]) {
@@ -116,111 +116,117 @@ void updateData(string line){
     // Units: 
 
     std::vector <std::string> tokens;
+    line = line.substr(0, line.length()-2);
     tokens = splitString(line, ',');
     string token, value, unit;
     //Decode token loop
     SEM_WAIT
+    if (_debugMode) cout << "|" << line << "|" << endl;
     for (auto tk: tokens) {
-        token = trim(tk.substr(0, tk.find("=")));
+	unsigned int n = tk.find("=");
+	if (n!=string::npos) {
+        token = trim(tk.substr(0, n));
         if (token=="Id") {
-            value = trim(tk.substr(tk.find("=")+1, tk.length()-1));
-            unit = "";
+            value = trim(tk.substr(n+1, tk.length()-n-1));
+            unit = " ";
         } else {
-            value = trim(tk.substr(tk.find("=")+1, tk.length()-2));
-            unit = value.substr(value.length()-2,1);
+            value = trim(tk.substr(n+1, tk.length()-n-2));
+            unit = tk.substr(tk.length()-1,1);
         }
+	if (_debugMode) cout << "| Token:" << token << "\tValue:" << value << "\tUnit:" << unit << " |" << endl;
         if (token=="Id") {
             WS.Id = value;
         } else
         if (token=="Vs") {
             WS.Battery = stof(value);
-            WS.BatteryUnit = unit.c_str()[0];
+            WS.BatteryUnit = unit;
         } else
         if (token=="Sn") {
             WS.WindSpeedMin = stof(value);
-            WS.WindSpeedMinUnit = unit.c_str()[0];
+            WS.WindSpeedMinUnit = unit;
         } else
         if (token=="Sm") {
             WS.WindSpeedAvg = stof(value);
-            WS.WindSpeedAvgUnit = unit.c_str()[0];
+            WS.WindSpeedAvgUnit = unit;
         } else
         if (token=="Sx") {
             WS.WindSpeedMax = stof(value);
-            WS.WindSpeedMaxUnit = unit.c_str()[0];
+            WS.WindSpeedMaxUnit = unit;
         } else
         if (token=="Dn") {
             WS.WindDirMin = stof(value);
-            WS.WindDirMinUnit = unit.c_str()[0];
+            WS.WindDirMinUnit = unit;
         } else
         if (token=="Dm") {
             WS.WindDirAvg = stof(value);
-            WS.WindDirAvgUnit = unit.c_str()[0];
+            WS.WindDirAvgUnit = unit;
         } else
         if (token=="Dx") {
             WS.WindDirMax = stof(value);
-            WS.WindDirMaxUnit = unit.c_str()[0];
+            WS.WindDirMaxUnit = unit;
         } else
         if (token=="Pa") {
             WS.AirPressure = stof(value);
-            WS.AirPressureUnit = unit.c_str()[0];
+            WS.AirPressureUnit = unit;
         } else
         if (token=="Ta") {
             WS.AirTemperature = stof(value);
-            WS.AirTemperatureUnit = unit.c_str()[0];
+            WS.AirTemperatureUnit = unit;
         } else
         if (token=="Tp") {
             WS.InternalTemperature = stof(value);
-            WS.InternalTemperatureUnit = unit.c_str()[0];
+            WS.InternalTemperatureUnit = unit;
         } else
         if (token=="Ua") {
             WS.RelativeHumidity = stof(value);
-            WS.RelativeHumidityUnit = unit.c_str()[0];
+            WS.RelativeHumidityUnit = unit;
         } else
         if (token=="Rc") {
             WS.RainAcc = stof(value);
-            WS.RainAccUnit = unit.c_str()[0];
+            WS.RainAccUnit = unit;
         } else
         if (token=="Rd") {
             WS.RainDuration = stof(value);
-            WS.RainDurationUnit = unit.c_str()[0];
+            WS.RainDurationUnit = unit;
         } else
         if (token=="Ri") {
             WS.RainIntensity = stof(value);
-            WS.RainIntensityUnit = unit.c_str()[0];
+            WS.RainIntensityUnit = unit;
         } else
         if (token=="Rp") {
             WS.RainPeak = stof(value);
-            WS.RainPeakUnit = unit.c_str()[0];
+            WS.RainPeakUnit = unit;
         } else
         if (token=="Hc") {
             WS.HailAcc = stof(value);
-            WS.HailAccUnit = unit.c_str()[0];
+            WS.HailAccUnit = unit;
         } else
         if (token=="Hd") {
             WS.HailDuration = stof(value);
-            WS.HailDurationUnit = unit.c_str()[0];
+            WS.HailDurationUnit = unit;
         } else
         if (token=="Hi") {
             WS.HailIntensity = stof(value);
-            WS.HailIntensityUnit = unit.c_str()[0];
+            WS.HailIntensityUnit = unit;
         } else
         if (token=="Hp") {
             WS.HailPeak = stof(value);
-            WS.HailPeakUnit = unit.c_str()[0];
+            WS.HailPeakUnit = unit;
         } else
         if (token=="Th") {
             WS.HeatingTemp = stof(value);
-            WS.HeatingTempUnit = unit.c_str()[0];
+            WS.HeatingTempUnit = unit;
         } else
         if (token=="Vh") {
             WS.HeatingVolt = stof(value);
-            WS.HeatingVoltUnit = unit.c_str()[0];
+            WS.HeatingVoltUnit = unit;
         } else
         if (token=="Vr") {
             WS.ReferenceVolt = stof(value);
-            WS.ReferenceVoltUnit = unit.c_str()[0];
+            WS.ReferenceVoltUnit = unit;
         } else
             WS.NonDecoded = tk;
+      }
     } 
     SEM_POST
 }
@@ -416,6 +422,7 @@ void dumpVar() {
 
 void thrOrionPublisher(){
     if (!OrionMode) return;
+	sleep(30);
     if (_debugMode) cout << "Start Orion Publisher Thread." << endl;
     bool connected = false;
     while (true) {
@@ -440,7 +447,7 @@ void thrOrionPublisher(){
                 if (_debugMode) cout << "Lost connection with Orion..." << endl;
                 break;
             }
-            int taskTime = (int) (std::time(0) - tsIni);
+            unsigned int taskTime = (int) (std::time(0) - tsIni);
             int sleepTime = PublishInterval - taskTime;
             if (taskTime <= PublishInterval) 
                 sleep(sleepTime);
@@ -471,53 +478,62 @@ bool ckEntity(){
 
 bool updateEntity(){
     SEM_WAIT
-    string js = " { \"Battery\": {\"value\":" + to_string(WS.Battery) + " , \"type\": \"Number\"}, \"BatteryUnit\": {\"value\":\"";
-            js += (WS.BatteryUnit + "\" , \"type\":\"Text\"}, ");
-            js += "\"WindSpeedMin\": {\"value\":" + to_string(WS.WindSpeedMin) + " , \"type\": \"Number\"}, \"WindSpeedMinUnit\": {\"value\":\"";
+    string js = "{\"Battery\": {\"value\":\"" + to_string(WS.Battery) + "\" , \"type\": \"Number\"}, \"BatteryUnit\": {\"value\":\"";
+	    js += (WS.BatteryUnit + "\" , \"type\":\"Text\"}, ");
+            js += "\"WindSpeedMin\": {\"value\":\"" + to_string(WS.WindSpeedMin) + "\" , \"type\": \"Number\"}, \"WindSpeedMinUnit\": {\"value\":\"";
             js += (WS.WindSpeedMinUnit + "\", \"type\":\"Text\"}, ");
-            js += "\"WindSpeedAvg\": {\"value\":" + to_string(WS.WindSpeedAvg) + " , \"type\": \"Number\"}, \"WindSpeedAvgUnit\": {\"value\":\"";
+            js += "\"WindSpeedAvg\": {\"value\":\"" + to_string(WS.WindSpeedAvg) + "\" , \"type\": \"Number\"}, \"WindSpeedAvgUnit\": {\"value\":\"";
             js += (WS.WindSpeedAvgUnit + "\", \"type\":\"Text\"}, ");
-            js += "\"WindSpeedMax\": {\"value\":" + to_string(WS.WindSpeedMax) + " , \"type\": \"Number\"}, \"WindSpeedMaxUnit\": {\"value\":\"";
+            js += "\"WindSpeedMax\": {\"value\":\"" + to_string(WS.WindSpeedMax) + "\" , \"type\": \"Number\"}, \"WindSpeedMaxUnit\": {\"value\":\"";
             js += (WS.WindSpeedMaxUnit + "\", \"type\":\"Text\"}, ");
-            js += "\"WindDirMin\": {\"value\":" + to_string(WS.WindDirMin) + " , \"type\": \"Number\"}, \"WindDirMinUnit\": {\"value\":\"";
+            js += "\"WindDirMin\": {\"value\":\"" + to_string(WS.WindDirMin) + "\" , \"type\": \"Number\"}, \"WindDirMinUnit\": {\"value\":\"";
             js += (WS.WindDirMinUnit + "\", \"type\":\"Text\"}, ");
-            js +=  "\"WindDirAvg\": {\"value\":" + to_string( WS.WindDirAvg) + " , \"type\": \"Number\"}, \"WindDirAvgUnit\": {\"value\":\"";
+            js +=  "\"WindDirAvg\": {\"value\":\"" + to_string( WS.WindDirAvg) + "\" , \"type\": \"Number\"}, \"WindDirAvgUnit\": {\"value\":\"";
             js += (WS.WindDirAvgUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"WindDirMax\": {\"value\":" + to_string( WS.WindDirMax) + " , \"type\": \"Number\"}, \"WindDirMaxUnit\": {\"value\":\"";
+            js +=  "\"WindDirMax\": {\"value\":\"" + to_string( WS.WindDirMax) + "\" , \"type\": \"Number\"}, \"WindDirMaxUnit\": {\"value\":\"";
             js +=  (WS.WindDirMaxUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"AirPressure\": {\"value\":" + to_string( WS.AirPressure) + " , \"type\": \"Number\"}, \"AirPressureUnit\": {\"value\":\"";
+            js +=  "\"AirPressure\": {\"value\":\"" + to_string( WS.AirPressure) + "\" , \"type\": \"Number\"}, \"AirPressureUnit\": {\"value\":\"";
             js +=  (WS.AirPressureUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"AirTemperature\": {\"value\":" + to_string( WS.AirTemperature) + " , \"type\": \"Number\"}, \"AirTemperatureUnit\": {\"value\":\"";
+            js +=  "\"AirTemperature\": {\"value\":\"" + to_string( WS.AirTemperature) + "\" , \"type\": \"Number\"}, \"AirTemperatureUnit\": {\"value\":\"";
             js +=  (WS.AirTemperatureUnit + "\", \"type\":\"Text\"},");
             js +=  "\"InternalTemperature\": {\"value\":" + to_string( WS.InternalTemperature) + " , \"type\": \"Number\"}, \"InternalTemperatureUnit\": {\"value\":\"";
             js +=  (WS.InternalTemperatureUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"RelativeHumidity\": {\"value\":" + to_string( WS.RelativeHumidity) + " , \"type\": \"Number\"}, \"RelativeHumidityUnit\": {\"value\":\"";
+            js +=  "\"RelativeHumidity\": {\"value\":\"" + to_string( WS.RelativeHumidity) + "\" , \"type\": \"Number\"}, \"RelativeHumidityUnit\": {\"value\":\"";
             js +=  (WS.RelativeHumidityUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"RainAcc\": {\"value\":" + to_string( WS.RainAcc) + " , \"type\": \"Number\"}, \"RainAccUnit\": {\"value\":\"";
+            js +=  "\"RainAcc\": {\"value\":\"" + to_string( WS.RainAcc) + "\" , \"type\": \"Number\"}, \"RainAccUnit\": {\"value\":\"";
             js +=  (WS.RainAccUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"RainDuration\": {\"value\":" + to_string( WS.RainDuration) + " , \"type\": \"Number\"}, \"RainDurationUnit\": {\"value\":\"";
+            js +=  "\"RainDuration\": {\"value\":\"" + to_string( WS.RainDuration) + "\" , \"type\": \"Number\"}, \"RainDurationUnit\": {\"value\":\"";
             js +=  (WS.RainDurationUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"RainIntensity\": {\"value\":" + to_string( WS.RainIntensity) + " , \"type\": \"Number\"}, \"RainIntensityUnit\": {\"value\":\"";
+            js +=  "\"RainIntensity\": {\"value\":\"" + to_string( WS.RainIntensity) + "\" , \"type\": \"Number\"}, \"RainIntensityUnit\": {\"value\":\"";
             js +=  (WS.RainIntensityUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"RainPeak\": {\"value\":" + to_string( WS.RainPeak) + " , \"type\": \"Number\"}, \"RainPeakUnit\": {\"value\":\"";
+            js +=  "\"RainPeak\": {\"value\":\"" + to_string( WS.RainPeak) + "\" , \"type\": \"Number\"}, \"RainPeakUnit\": {\"value\":\"";
             js +=  (WS.RainPeakUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"HailAcc\": {\"value\":" + to_string( WS.HailAcc) + " , \"type\": \"Number\"}, \"HailAccUnit\": {\"value\":\"";
+            js +=  "\"HailAcc\": {\"value\":\"" + to_string( WS.HailAcc) + "\" , \"type\": \"Number\"}, \"HailAccUnit\": {\"value\":\"";
             js +=  (WS.HailAccUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"HailDuration\": {\"value\":" + to_string( WS.HailDuration) + " , \"type\": \"Number\"}, \"HailDurationUnit\": {\"value\":\"";
+            js +=  "\"HailDuration\": {\"value\":\"" + to_string( WS.HailDuration) + "\" , \"type\": \"Number\"}, \"HailDurationUnit\": {\"value\":\"";
             js +=  (WS.HailDurationUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"HailIntensity\": {\"value\":" + to_string( WS.HailIntensity) + " , \"type\": \"Number\"}, \"HailIntensityUnit\": {\"value\":\"";
+            js +=  "\"HailIntensity\": {\"value\":\"" + to_string( WS.HailIntensity) + "\" , \"type\": \"Number\"}, \"HailIntensityUnit\": {\"value\":\"";
             js +=  (WS.HailIntensityUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"HailPeak\": {\"value\":" + to_string( WS.HailPeak) + " , \"type\": \"Number\"}, \"HailPeakUnit\": {\"value\":\"";
+            js +=  "\"HailPeak\": {\"value\":\"" + to_string( WS.HailPeak) + "\" , \"type\": \"Number\"}, \"HailPeakUnit\": {\"value\":\"";
             js +=  (WS.HailPeakUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"HeatingTemp\": {\"value\":" + to_string( WS.HeatingTemp) + " , \"type\": \"Number\"}, \"HeatingTempUnit\": {\"value\":\"";
+            js +=  "\"HeatingTemp\": {\"value\":\"" + to_string( WS.HeatingTemp) + "\" , \"type\": \"Number\"}, \"HeatingTempUnit\": {\"value\":\"";
             js +=  (WS.HeatingTempUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"HeatingVolt\": {\"value\":" + to_string( WS.HeatingVolt) + " , \"type\": \"Number\"}, \"HeatingVoltUnit\": {\"value\":\"";
+            js +=  "\"HeatingVolt\": {\"value\":\"" + to_string( WS.HeatingVolt) + "\" , \"type\": \"Number\"}, \"HeatingVoltUnit\": {\"value\":\"";
             js +=  (WS.HeatingVoltUnit + "\", \"type\":\"Text\"},");
-            js +=  "\"ReferenceVolt\": {\"value\":" + to_string( WS.ReferenceVolt) + " , \"type\": \"Number\"}, \"ReferenceVoltUnit\": {\"value\":\"";
-            js +=  (WS.ReferenceVoltUnit + "\", \"type\":\"Text\"} }");
-        
+            js +=  "\"ReferenceVolt\": {\"value\":\"" + to_string( WS.ReferenceVolt) + "\" , \"type\": \"Number\"}, \"ReferenceVoltUnit\": {\"value\":\"";
+            js +=  (WS.ReferenceVoltUnit + "\", \"type\":\"Text\"},");
+	    js += "\"LocalTimeStamp\": {\"value\":\""+to_string(std::time(0))+"\", \"type\":\"Integer\"}}";        
     SEM_POST
     ostringstream url;
+
+//    cout << "|" << js << "|" << endl;
+
+//    cout << js.length() << endl;
+
+//    cout << "|" << js.c_str() << "|" << endl;
+
+//    cout << sizeof(js.c_str()) << endl;
+
     
     url << OrionHost << ":" << OrionPort << "/v2/entities/" << NodeID << "/attrs?options=keyValues";
     if (_debugMode) cout << "URL:\t" << url.str() << endl;
@@ -577,22 +593,21 @@ string getRestFiware(string url, curl_slist *chunk, string data) {
         res = curl_easy_perform(curl);
         if(res != CURLE_OK) {
             if (_debugMode) cout << "CURL return: " << res << endl;
-            curl_easy_cleanup(curl);
+//            curl_easy_cleanup(curl);
             curl_global_cleanup();
             return "error";
         }
-        curl_easy_cleanup(curl);
+//        curl_easy_cleanup(curl);
         curl_global_cleanup();
         return Buffer;
     }
-    curl_easy_cleanup(curl);
+//    curl_easy_cleanup(curl);
     curl_global_cleanup();
     return "error";
 }
 
 
-size_t curlCallback(char *contents, size_t size, size_t nmemb, void *userp) {
+static size_t curlCallback(char *contents, size_t size, size_t nmemb, void *userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
-

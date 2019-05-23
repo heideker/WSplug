@@ -1,4 +1,3 @@
-
 #include <string>
 
 using namespace std;
@@ -7,49 +6,49 @@ class WeatherStation {
     public:
         string Id;
         float Battery;
-        char BatteryUnit;
+        string BatteryUnit;
         float WindSpeedMin; //Sn
-        char WindSpeedMinUnit;
+        string WindSpeedMinUnit;
         float WindSpeedAvg; //Sm
-        char WindSpeedAvgUnit;
+        string WindSpeedAvgUnit;
         float WindSpeedMax; //Sx
-        char WindSpeedMaxUnit;
+        string WindSpeedMaxUnit;
         float WindDirMin; //Dn
-        char WindDirMinUnit;
+        string WindDirMinUnit;
         float WindDirAvg; //Dm
-        char WindDirAvgUnit;
+        string WindDirAvgUnit;
         float WindDirMax; //Dx
-        char WindDirMaxUnit;
+        string WindDirMaxUnit;
         float AirPressure; //Pa
-        char AirPressureUnit;
+        string AirPressureUnit;
         float AirTemperature; //Ta
-        char AirTemperatureUnit;
+        string AirTemperatureUnit;
         float InternalTemperature; //Tp
-        char InternalTemperatureUnit;
+        string InternalTemperatureUnit;
         float RelativeHumidity; //Ua
-        char RelativeHumidityUnit;
+        string RelativeHumidityUnit;
         float RainAcc; //Rc
-        char RainAccUnit;
+        string RainAccUnit;
         float RainDuration; //Rd
-        char RainDurationUnit;
+        string RainDurationUnit;
         float RainIntensity; //Ri
-        char RainIntensityUnit;
+        string RainIntensityUnit;
         float RainPeak; //Rp
-        char RainPeakUnit;
+        string RainPeakUnit;
         float HailAcc; //Hc
-        char HailAccUnit;
+        string HailAccUnit;
         float HailDuration; //Hd
-        char HailDurationUnit;
+        string HailDurationUnit;
         float HailIntensity; //Hi
-        char HailIntensityUnit;
+        string HailIntensityUnit;
         float HailPeak; //Hp
-        char HailPeakUnit;
+        string HailPeakUnit;
         float HeatingTemp; //Th
-        char HeatingTempUnit;
+        string HeatingTempUnit;
         float HeatingVolt; //Vh
-        char HeatingVoltUnit;
+        string HeatingVoltUnit;
         float ReferenceVolt; //Vr
-        char ReferenceVoltUnit;
+        string ReferenceVoltUnit;
         string NonDecoded;
         
 };
